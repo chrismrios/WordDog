@@ -82,7 +82,7 @@ function startGame() {
   const keysLayout = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
+    ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE']
   ];
 
   for (let row of keysLayout) {
@@ -91,7 +91,18 @@ function startGame() {
     for (let key of row) {
       const keyDiv = document.createElement('div');
       keyDiv.className = 'key';
-      keyDiv.textContent = key;
+      keyDiv.dataset.key = key;
+
+      if (key === 'BACKSPACE') {
+        keyDiv.innerHTML = '<i class="bi bi-backspace"></i>';
+        keyDiv.classList.add('special-key');
+      } else if (key === 'ENTER') {
+        keyDiv.textContent = 'ENTER';
+        keyDiv.classList.add('special-key');
+      } else {
+        keyDiv.textContent = key;
+      }
+
       keyDiv.addEventListener('click', handleLetterClick);
       rowDiv.appendChild(keyDiv);
     }
@@ -146,8 +157,15 @@ function adjustChatWindowHeight() {
 function handleLetterClick(event) {
   if (!gameActive) return;
 
-  const letter = event.target.textContent.toUpperCase();
-  addLetter(letter);
+  const key = event.target.dataset.key;
+
+  if (key === 'BACKSPACE') {
+    removeLetter();
+  } else if (key === 'ENTER') {
+    submitGuess();
+  } else if (/^[A-Z]$/.test(key)) {
+    addLetter(key);
+  }
 }
 
 function handleKeyDown(event) {
@@ -324,7 +342,7 @@ function animateCell(cell) {
 function updateKeyboard(letter, status) {
   const keys = document.getElementsByClassName("key");
   for (let keyDiv of keys) {
-    if (keyDiv.textContent.toUpperCase() === letter.toUpperCase()) {
+    if (keyDiv.dataset.key.toUpperCase() === letter.toUpperCase()) {
       if (status === "correct") {
         keyDiv.classList.remove("present-key", "absent-key");
         keyDiv.classList.add("correct-key");
