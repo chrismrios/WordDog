@@ -1,0 +1,34 @@
+End-to-End Prompt for Recreation
+Here’s a comprehensive prompt to recreate the Word Dog game:
+
+Create a modern word puzzle game called Word Dog with the following features:
+Core Gameplay:
+
+Allow players to choose word lengths (4, 5, or 6 letters) from a dropdown.
+Display a dynamic grid for guesses based on the selected word length.
+Include an on-screen keyboard with styled letter keys, a Backspace key, and an Enter key.
+Highlight letters in green (correct), yellow (present but misplaced), and gray (absent).
+Validate words using the Datamuse API or a fallback word list.
+Show a win message when the correct word is guessed, or reveal the word on a loss.
+Fetch and display the word's definition at the end of the game using the Free Dictionary API.
+Admin Features:
+
+Include a "God Mode" feature activated by typing the secret code idbfg.
+Display a modal with the correct word and all API responses for debugging.
+Chat Bot:
+
+Add a chat bot panel next to the game grid.
+Players can ask for clues (e.g., "What is the first letter?").
+Limit the number of questions to 20, with a visible counter.
+Simulate typing by streaming chat bot responses.
+Design:
+
+Implement a responsive design suitable for desktop and mobile (e.g., iPhone 12).
+Include a light mode/dark mode toggle button and multiple style options (e.g., Neon Night, Ocean Breeze).
+Style the game with a modern, professional look, including styled buttons for "Submit" and "Restart."
+Deployment:
+
+Make the game deployable using GitHub Pages or a similar free hosting service.
+Bonus:
+
+Add smooth animations for key actions (e.g., typing, theme changes, modal pop-ups).
