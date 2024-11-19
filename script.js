@@ -8,19 +8,18 @@ let questionCount = 0;
 const maxQuestions = 20;
 let godModeSequence = "";
 const godModeCode = "idbfg";
-let godModeActive = false; // New variable to track god mode status
+let godModeActive = false;
 
 // Initialize the game
 const grid = document.getElementById("grid");
 const keyboardDiv = document.getElementById("keyboard");
 const messageDiv = document.getElementById("message");
-const submitButton = document.getElementById("submit");
 const restartButton = document.getElementById("restart");
 const wordLengthSelector = document.getElementById("word-length-selector");
 const themeSwitch = document.getElementById("theme-switch");
 const styleSelector = document.getElementById("style-selector");
 
-// Chat bot elements
+// Hint Bot elements
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatWindow = document.getElementById("chat-window");
@@ -35,6 +34,9 @@ let targetWord = "";
 // Store API responses for God Mode
 let apiResponses = [];
 
+// New variable to track clues already given
+let givenClues = [];
+
 // Fetch word list and start game
 function fetchWords() {
   // Using Datamuse API to fetch words matching the pattern
@@ -44,7 +46,6 @@ function fetchWords() {
     .then(data => {
       // Store API response for God Mode
       apiResponses.push({ api: 'Datamuse Word List', response: data });
-      // Sample response: [{ "word": "apple", "score": 100 }, ... ]
       validWords = data
         .filter(item => new RegExp(`^[a-zA-Z]{${wordLength}}$`).test(item.word))
         .map(item => item.word.toUpperCase());
@@ -114,15 +115,15 @@ function startGame() {
   currentRow = 0;
   gameActive = true;
   messageDiv.textContent = "";
-  submitButton.disabled = false;
   godModeSequence = "";
-  godModeActive = false; // Reset god mode status
-  apiResponses = []; // Clear API responses
+  godModeActive = false;
+  apiResponses = [];
+  givenClues = [];
 
   // Add event listeners for keyboard input using capture phase
   document.addEventListener("keydown", handleKeyDown, true);
 
-  // Reset chat bot
+  // Reset Hint Bot
   chatWindow.innerHTML = "";
   questionCount = 0;
   updateChatCounter();
@@ -134,16 +135,12 @@ function startGame() {
   applyStyle(styleSelector.value);
 
   // Ensure dark mode is applied
-  if (themeSwitch.checked) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
+  applyDarkMode();
 
   // Hide chat container on small screens
   if (window.innerWidth <= 600) {
     chatContainer.classList.add('hidden');
-    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Chat';
+    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Hint Bot';
   } else {
     chatContainer.classList.remove('hidden');
   }
@@ -183,8 +180,6 @@ function handleKeyDown(event) {
     }
   }
 
-  if (!gameActive) return;
-
   // Check if the focused element is an input or textarea
   const activeElement = document.activeElement;
   const isInputField = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable;
@@ -193,6 +188,8 @@ function handleKeyDown(event) {
     // Do not process keydown events if an input field is focused
     return;
   }
+
+  if (!gameActive) return;
 
   const key = event.key.toUpperCase();
 
@@ -231,8 +228,6 @@ function updateGrid() {
   }
 }
 
-submitButton.addEventListener("click", submitGuess);
-
 function submitGuess() {
   if (!gameActive) return;
 
@@ -244,8 +239,9 @@ function submitGuess() {
   validateWord(currentGuess)
     .then(isValid => {
       if (!isValid) {
-        showMessage("Invalid word. Try again.");
-        resetCurrentGuess();
+        showMessage("Invalid word. Try again.", true);
+        shakeRow(currentRow);
+        // Do not reset current guess to allow backspace
         return;
       }
       checkGuess();
@@ -265,7 +261,6 @@ function validateWord(word) {
     .then(data => {
       // Store API response for God Mode
       apiResponses.push({ api: 'Datamuse Word Validation', response: data });
-      // Sample response: [{ "word": "apple", "score": 100 }]
       // Check if the word exists in the API response
       return data.some(item => item.word.toLowerCase() === word.toLowerCase());
     })
@@ -315,7 +310,6 @@ function checkGuess() {
   if (currentGuess === targetWord) {
     showMessage("🎉 Congratulations! You guessed the word!");
     gameActive = false;
-    disableGame();
     endGame(true);
     return;
   }
@@ -324,7 +318,6 @@ function checkGuess() {
   if (currentRow === maxAttempts) {
     showMessage(`Game Over! The word was ${targetWord}.`);
     gameActive = false;
-    disableGame();
     endGame(false);
     return;
   }
@@ -337,6 +330,17 @@ function animateCell(cell) {
   setTimeout(() => {
     cell.style.transform = 'scale(1)';
   }, 100);
+}
+
+function shakeRow(rowIndex) {
+  const start = rowIndex * wordLength;
+  for (let i = 0; i < wordLength; i++) {
+    const cell = grid.children[start + i];
+    cell.classList.add('shake');
+    cell.addEventListener('animationend', () => {
+      cell.classList.remove('shake');
+    }, { once: true });
+  }
 }
 
 function updateKeyboard(letter, status) {
@@ -364,25 +368,24 @@ function resetCurrentGuess() {
   currentGuess = "";
 }
 
-function disableGame() {
-  submitButton.disabled = true;
-  document.removeEventListener("keydown", handleKeyDown, true);
-}
-
-function showMessage(text) {
+function showMessage(text, isError = false) {
   messageDiv.textContent = text;
+  if (isError) {
+    messageDiv.style.color = 'orange';
+  } else {
+    messageDiv.style.color = 'var(--message-color)';
+  }
 }
 
 restartButton.addEventListener("click", () => {
-  document.removeEventListener("keydown", handleKeyDown, true);
   fetchWords();
 });
 
-// Chat Bot Functionality
+// Hint Bot Functionality
 
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (!gameActive) return;
+  if (!gameActive && !godModeActive) return;
 
   if (questionCount >= maxQuestions) {
     alert("You have reached the maximum number of questions.");
@@ -398,8 +401,14 @@ chatForm.addEventListener("submit", (e) => {
   updateChatCounter();
 
   // Generate a response based on the user's question
-  const assistantMessage = generateClue(userMessage);
-  addChatMessage("assistant", assistantMessage);
+  generateClue(userMessage)
+    .then(assistantMessage => {
+      addChatMessage("assistant", assistantMessage);
+    })
+    .catch(error => {
+      console.error('Error generating clue:', error);
+      addChatMessage("assistant", "I'm sorry, I couldn't process your request.");
+    });
 });
 
 function addChatMessage(sender, message) {
@@ -407,7 +416,7 @@ function addChatMessage(sender, message) {
   messageDiv.classList.add("chat-message", sender);
   chatWindow.appendChild(messageDiv);
 
-  if (sender === "assistant" && message.startsWith("...")) {
+  if (sender === "assistant") {
     streamAssistantMessage(messageDiv, message);
   } else {
     messageDiv.textContent = message;
@@ -423,49 +432,125 @@ function updateChatCounter() {
 // Clue Generation Logic
 
 function generateClue(question) {
-  const lowerQuestion = question.toLowerCase();
+  return new Promise((resolve, reject) => {
+    const lowerQuestion = question.toLowerCase();
 
-  if (lowerQuestion.includes("first letter")) {
-    return `The first letter is "${targetWord[0]}".`;
-  } else if (lowerQuestion.includes("last letter")) {
-    return `The last letter is "${targetWord[targetWord.length - 1]}".`;
-  } else if (lowerQuestion.includes("number of vowels")) {
-    const vowels = targetWord.match(/[AEIOU]/gi) || [];
-    return `The word has ${vowels.length} vowel(s).`;
-  } else if (lowerQuestion.includes("number of consonants")) {
-    const consonants = targetWord.match(/[^AEIOU]/gi) || [];
-    return `The word has ${consonants.length} consonant(s).`;
-  } else if (lowerQuestion.includes("contains the letter")) {
-    const letterMatch = lowerQuestion.match(/letter\s([a-z])/);
-    if (letterMatch) {
-      const letter = letterMatch[1].toUpperCase();
-      if (targetWord.includes(letter)) {
-        return `Yes, the word contains the letter "${letter}".`;
+    if (godModeActive) {
+      if (lowerQuestion.includes("def") || lowerQuestion.includes("definition")) {
+        // Fetch and provide the definition
+        fetchDefinition(targetWord)
+          .then(definition => {
+            resolve(`Definition of "${targetWord}": ${definition}`);
+          })
+          .catch(error => {
+            console.error('Error fetching definition:', error);
+            resolve(`Definition not found for "${targetWord}".`);
+          });
       } else {
-        return `No, the word does not contain the letter "${letter}".`;
+        // Provide the word directly
+        resolve(`Since you're in God Mode, the word is "${targetWord}".`);
       }
-    } else {
-      return `Please specify the letter you're asking about.`;
+      return;
     }
-  } else if (lowerQuestion.includes("meaning") || lowerQuestion.includes("definition")) {
-    return `I'm sorry, I cannot provide definitions during the game.`;
-  } else if (godModeActive) {
-    // In god mode, provide the word
-    return `Since you're in God Mode, the word is "${targetWord}".`;
-  } else {
-    // Provide a random clue
-    const randomClues = [
-      `The word starts with "${targetWord[0]}".`,
-      `The word ends with "${targetWord[targetWord.length - 1]}".`,
-      `The word has ${targetWord.length} letters.`,
-      `The second letter is "${targetWord[1]}".`,
-      `The word contains the letter "${targetWord[2]}".`
-    ];
-    return randomClues[Math.floor(Math.random() * randomClues.length)];
-  }
+
+    let clue = "";
+
+    if (lowerQuestion.includes("first letter")) {
+      clue = `The first letter is "${targetWord[0]}".`;
+    } else if (lowerQuestion.includes("last letter")) {
+      clue = `The last letter is "${targetWord[targetWord.length - 1]}".`;
+    } else if (lowerQuestion.includes("number of vowels")) {
+      const vowels = targetWord.match(/[AEIOU]/gi) || [];
+      clue = `The word has ${vowels.length} vowel(s).`;
+    } else if (lowerQuestion.includes("number of consonants")) {
+      const consonants = targetWord.match(/[^AEIOU]/gi) || [];
+      clue = `The word has ${consonants.length} consonant(s).`;
+    } else if (lowerQuestion.includes("contains the letter")) {
+      const letterMatch = lowerQuestion.match(/letter\s([a-z])/);
+      if (letterMatch) {
+        const letter = letterMatch[1].toUpperCase();
+        if (targetWord.includes(letter)) {
+          clue = `Yes, the word contains the letter "${letter}".`;
+        } else {
+          clue = `No, the word does not contain the letter "${letter}".`;
+        }
+      } else {
+        clue = `Please specify the letter you're asking about.`;
+      }
+    } else if (lowerQuestion.includes("meaning") || lowerQuestion.includes("definition")) {
+      clue = `I'm sorry, I cannot provide definitions during the game.`;
+    } else {
+      // Provide a random clue that hasn't been given yet
+      const possibleClues = [
+        `The word starts with "${targetWord[0]}".`,
+        `The word ends with "${targetWord[targetWord.length - 1]}".`,
+        `The word has ${targetWord.length} letters.`,
+        `The second letter is "${targetWord[1]}".`,
+        `The word contains the letter "${targetWord[2]}".`,
+        `The word's middle letter is "${targetWord[Math.floor(targetWord.length / 2)]}".`,
+        `The word has ${new Set(targetWord.split('')).size} unique letters.`,
+        `The word rhymes with "${getRhymingWord(targetWord)}".`,
+        `The word's letters sum up to ${getLetterSum(targetWord)} in Scrabble scores.`,
+        `The word is a type of "${getWordType(targetWord)}".`
+      ];
+
+      // Filter out clues already given
+      const newClues = possibleClues.filter(clue => !givenClues.includes(clue));
+
+      if (newClues.length > 0) {
+        clue = newClues[Math.floor(Math.random() * newClues.length)];
+      } else {
+        clue = `No more clues available. Try your best!`;
+      }
+    }
+
+    // Add the clue to the list of given clues
+    if (!givenClues.includes(clue)) {
+      givenClues.push(clue);
+    } else {
+      // If the clue has been given, try to generate a new one
+      return resolve(generateClue("")); // Recursion with empty question to get a random clue
+    }
+
+    resolve(clue);
+  });
 }
 
-// Stream assistant message (for end-of-game definition)
+// Helper function to get a rhyming word using Datamuse API
+function getRhymingWord(word) {
+  // Using Datamuse API to get rhymes
+  const apiUrl = `https://api.datamuse.com/words?rel_rhy=${word.toLowerCase()}&max=5`;
+
+  // Return a random rhyming word or a placeholder
+  let rhymingWord = '...';
+
+  // Synchronous request is not possible here; return a placeholder
+  return rhymingWord;
+}
+
+// Helper function to get word type using Dictionary API
+function getWordType(word) {
+  // Using Free Dictionary API to fetch word type
+  const apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`;
+
+  // Return a placeholder as synchronous request is not possible
+  return '...';
+}
+
+// Helper function to calculate Scrabble letter sum
+function getLetterSum(word) {
+  const letterScores = {
+    A: 1, B: 3, C: 3, D: 2, E: 1,
+    F: 4, G: 2, H: 4, I: 1, J: 8,
+    K: 5, L: 1, M: 3, N: 1, O: 1,
+    P: 3, Q: 10, R: 1, S: 1, T: 1,
+    U: 1, V: 4, W: 4, X: 8, Y: 4,
+    Z: 10
+  };
+  return word.split('').reduce((sum, letter) => sum + letterScores[letter.toUpperCase()], 0);
+}
+
+// Stream assistant message (for bot responses)
 function streamAssistantMessage(messageDiv, fullMessage) {
   let index = 0;
   const interval = setInterval(() => {
@@ -503,29 +588,40 @@ function fetchDefinition(word) {
     .then(data => {
       // Store API response for God Mode
       apiResponses.push({ api: 'Dictionary Definition', response: data });
-      /* Sample response:
-      [
-        {
-          "word": "example",
-          "meanings": [
-            {
-              "partOfSpeech": "noun",
-              "definitions": [
-                {
-                  "definition": "A thing characteristic of its kind or illustrating a general rule."
-                }
-              ]
-            }
-          ]
-        }
-      ]
-      */
       if (data[0] && data[0].meanings && data[0].meanings[0]) {
         const definition = data[0].meanings[0].definitions[0].definition;
         return definition;
       } else {
+        // Use fallback API if definition not found
+        return fetchFallbackDefinition(word);
+      }
+    })
+    .catch(error => {
+      // Use fallback API in case of error
+      return fetchFallbackDefinition(word);
+    });
+}
+
+// Fallback definition using Merriam-Webster's Collegiate Dictionary API
+function fetchFallbackDefinition(word) {
+  const apiKey = 'YOUR_MERRIAM_WEBSTER_API_KEY'; // Replace with your API key
+  const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word.toLowerCase()}?key=${apiKey}`;
+
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      // Store API response for God Mode
+      apiResponses.push({ api: 'Merriam-Webster Definition', response: data });
+      if (data[0] && data[0].shortdef && data[0].shortdef[0]) {
+        const definition = data[0].shortdef[0];
+        return definition;
+      } else {
         throw new Error('Definition not found');
       }
+    })
+    .catch(error => {
+      console.error('Error fetching fallback definition:', error);
+      throw new Error('Definition not found');
     });
 }
 
@@ -536,7 +632,7 @@ window.addEventListener('resize', () => {
   // Hide or show chat container based on window width
   if (window.innerWidth <= 600) {
     chatContainer.classList.add('hidden');
-    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Chat';
+    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Hint Bot';
   } else {
     chatContainer.classList.remove('hidden');
   }
@@ -549,9 +645,24 @@ wordLengthSelector.addEventListener('change', () => {
 });
 
 // Theme Switch
-themeSwitch.addEventListener('change', () => {
+themeSwitch.addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
+  themeSwitch.innerHTML = document.body.classList.contains('dark-mode') ?
+    '<i class="bi bi-moon-stars-fill"></i>' :
+    '<i class="bi bi-brightness-high-fill"></i>';
 });
+
+// Apply dark mode based on time
+function applyDarkMode() {
+  const hour = new Date().getHours();
+  if (hour >= 18 || hour < 6) {
+    document.body.classList.add('dark-mode');
+    themeSwitch.innerHTML = '<i class="bi bi-moon-stars-fill"></i>';
+  } else {
+    document.body.classList.remove('dark-mode');
+    themeSwitch.innerHTML = '<i class="bi bi-brightness-high-fill"></i>';
+  }
+}
 
 // Style Selector
 styleSelector.addEventListener('change', () => {
@@ -581,7 +692,7 @@ function applyStyle(styleName) {
   }
 
   // Ensure dark mode is re-applied if it's enabled
-  if (themeSwitch.checked) {
+  if (document.body.classList.contains('dark-mode')) {
     document.body.classList.add('dark-mode');
   } else {
     document.body.classList.remove('dark-mode');
@@ -590,7 +701,7 @@ function applyStyle(styleName) {
 
 function showGodMode() {
   godModeActive = true;
-  // Create a modal to display the target word and API responses
+  // Create a modal to display the target word and definition
   const modal = document.createElement('div');
   modal.id = 'god-mode-modal';
   modal.innerHTML = `
@@ -598,15 +709,21 @@ function showGodMode() {
       <span class="close-button">&times;</span>
       <h2>God Mode Activated</h2>
       <p>The target word is: <strong>${targetWord}</strong></p>
-      <h3>API Responses:</h3>
-      <pre id="api-responses"></pre>
+      <p id="god-mode-definition">Fetching definition...</p>
     </div>
   `;
   document.body.appendChild(modal);
 
-  // Display API responses
-  const apiResponsesDiv = modal.querySelector('#api-responses');
-  apiResponsesDiv.textContent = JSON.stringify(apiResponses, null, 2);
+  // Fetch and display the definition
+  fetchDefinition(targetWord)
+    .then(definition => {
+      const definitionDiv = modal.querySelector('#god-mode-definition');
+      definitionDiv.textContent = `Definition: ${definition}`;
+    })
+    .catch(error => {
+      const definitionDiv = modal.querySelector('#god-mode-definition');
+      definitionDiv.textContent = `Definition not found.`;
+    });
 
   // Show the modal
   modal.style.display = 'block';
@@ -622,9 +739,9 @@ function showGodMode() {
 chatToggleButton.addEventListener('click', () => {
   chatContainer.classList.toggle('hidden');
   if (chatContainer.classList.contains('hidden')) {
-    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Chat';
+    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Hint Bot';
   } else {
-    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Close Chat';
+    chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Close Hint Bot';
   }
 });
 

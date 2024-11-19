@@ -14,6 +14,7 @@
   --header-footer-bg: #f7f7f8;
   --user-message-bg: #dcf8c6;
   --assistant-message-bg: #f1f0f0;
+  --message-color: var(--absent-color);
 }
 
 /* Dark Mode Variables */
@@ -29,10 +30,149 @@ body.dark-mode {
   --header-footer-bg: #303134;
   --user-message-bg: #056162;
   --assistant-message-bg: #2c2c2e;
+  --message-color: var(--present-color);
 }
 
 /* Theme Variables */
-/* ... (Theme variables remain unchanged) ... */
+body.neon-night {
+  --background-color: #000000;
+  --text-color: #00ffcc;
+  --primary-color: #ff00ff;
+  --secondary-color: #1a1a1a;
+  --border-color: #333333;
+  --correct-color: #00ff00;
+  --present-color: #ffff00;
+  --absent-color: #ff0000;
+  --header-footer-bg: #000000;
+  --user-message-bg: #1a1a1a;
+  --assistant-message-bg: #262626;
+}
+
+body.ocean-breeze {
+  --background-color: #e0f7fa;
+  --text-color: #006064;
+  --primary-color: #00838f;
+  --secondary-color: #b2ebf2;
+  --border-color: #4dd0e1;
+  --correct-color: #00796b;
+  --present-color: #cddc39;
+  --absent-color: #8d6e63;
+  --header-footer-bg: #80deea;
+  --user-message-bg: #b2ebf2;
+  --assistant-message-bg: #e0f2f1;
+}
+
+body.solar-flare {
+  --background-color: #fff3e0;
+  --text-color: #e65100;
+  --primary-color: #ff8f00;
+  --secondary-color: #ffe0b2;
+  --border-color: #ffb74d;
+  --correct-color: #f57c00;
+  --present-color: #ffca28;
+  --absent-color: #6d4c41;
+  --header-footer-bg: #ffe0b2;
+  --user-message-bg: #ffcc80;
+  --assistant-message-bg: #ffe0b2;
+}
+
+body.forest-glade {
+  --background-color: #e8f5e9;
+  --text-color: #1b5e20;
+  --primary-color: #2e7d32;
+  --secondary-color: #c8e6c9;
+  --border-color: #66bb6a;
+  --correct-color: #1b5e20;
+  --present-color: #aed581;
+  --absent-color: #4e342e;
+  --header-footer-bg: #a5d6a7;
+  --user-message-bg: #c8e6c9;
+  --assistant-message-bg: #e8f5e9;
+}
+
+body.rose-garden {
+  --background-color: #fce4ec;
+  --text-color: #880e4f;
+  --primary-color: #ad1457;
+  --secondary-color: #f8bbd0;
+  --border-color: #ec407a;
+  --correct-color: #c2185b;
+  --present-color: #f06292;
+  --absent-color: #6a1b9a;
+  --header-footer-bg: #f8bbd0;
+  --user-message-bg: #f48fb1;
+  --assistant-message-bg: #fce4ec;
+}
+
+body.midnight-blue {
+  --background-color: #1a237e;
+  --text-color: #c5cae9;
+  --primary-color: #3949ab;
+  --secondary-color: #303f9f;
+  --border-color: #5c6bc0;
+  --correct-color: #283593;
+  --present-color: #9fa8da;
+  --absent-color: #8e24aa;
+  --header-footer-bg: #3f51b5;
+  --user-message-bg: #7986cb;
+  --assistant-message-bg: #c5cae9;
+}
+
+body.sunset-blush {
+  --background-color: #fff8e1;
+  --text-color: #e65100;
+  --primary-color: #ff6d00;
+  --secondary-color: #ffecb3;
+  --border-color: #ffab40;
+  --correct-color: #ff8f00;
+  --present-color: #ffd740;
+  --absent-color: #5d4037;
+  --header-footer-bg: #ffcc80;
+  --user-message-bg: #ffe082;
+  --assistant-message-bg: #fff8e1;
+}
+
+body.cyberpunk {
+  --background-color: #0d0d0d;
+  --text-color: #ccff00;
+  --primary-color: #ff00ff;
+  --secondary-color: #1a1a1a;
+  --border-color: #333333;
+  --correct-color: #00ff00;
+  --present-color: #00ffff;
+  --absent-color: #ff0000;
+  --header-footer-bg: #1a1a1a;
+  --user-message-bg: #262626;
+  --assistant-message-bg: #333333;
+}
+
+body.minimalist {
+  --background-color: #f5f5f5;
+  --text-color: #212121;
+  --primary-color: #616161;
+  --secondary-color: #e0e0e0;
+  --border-color: #9e9e9e;
+  --correct-color: #424242;
+  --present-color: #757575;
+  --absent-color: #bdbdbd;
+  --header-footer-bg: #e0e0e0;
+  --user-message-bg: #bdbdbd;
+  --assistant-message-bg: #f5f5f5;
+}
+
+body.vintage {
+  --background-color: #fdf6e3;
+  --text-color: #657b83;
+  --primary-color: #b58900;
+  --secondary-color: #eee8d5;
+  --border-color: #93a1a1;
+  --correct-color: #586e75;
+  --present-color: #cb4b16;
+  --absent-color: #6c71c4;
+  --header-footer-bg: #eee8d5;
+  --user-message-bg: #d2b48c;
+  --assistant-message-bg: #fdf6e3;
+}
 
 /* General Styles */
 * {
@@ -64,9 +204,9 @@ header h1 {
 #controls {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
   margin: 5px 20px;
 }
 
@@ -87,9 +227,17 @@ header h1 {
   gap: 5px;
 }
 
-#theme-switch {
-  width: 16px;
-  height: 16px;
+.toggle-button {
+  background-color: var(--secondary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.toggle-button i {
+  font-size: 1.2em;
+  color: var(--text-color);
 }
 
 #game-container {
@@ -273,19 +421,18 @@ header h1 {
   line-height: 38px;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
+  margin: 1px; /* Added margin for padding between keys */
 }
 
 .key:hover {
   background-color: var(--border-color);
 }
 
-/* New class for special keys */
 .special-key {
-  width: 50px; /* Adjust as needed */
+  width: 50px;
   font-size: 0.8em;
 }
 
-/* Adjust icon sizes inside keys */
 .key i {
   font-size: 1.2em;
   vertical-align: middle;
@@ -331,7 +478,26 @@ header h1 {
   font-size: 0.9em;
   text-align: center;
   margin-top: 10px;
-  color: var(--absent-color);
+  color: var(--message-color);
+}
+
+/* Style for error messages */
+#error-message {
+  color: orange;
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 0.5s;
 }
 
 /* Responsive Styles */
@@ -341,9 +507,8 @@ header h1 {
   }
 
   #controls {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    flex-wrap: nowrap;
+    gap: 5px;
   }
 
   #grid-and-chat {
@@ -434,6 +599,7 @@ header h1 {
   max-width: 400px;
   text-align: center;
   border-radius: 8px;
+  font-weight: normal; /* Made text less bold */
 }
 
 #god-mode-modal .close-button {
