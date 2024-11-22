@@ -607,3 +607,23 @@ header h1 {
   font-size: 1.2em;
   cursor: pointer;
 }
+
+/* Music Toggle Styles */
+#music-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#music-switch {
+  background-color: var(--secondary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+#music-switch i {
+  font-size: 1.2em;
+  color: var(--text-color);
+}
