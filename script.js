@@ -166,44 +166,52 @@ function handleLetterClick(event) {
 }
 
 function handleKeyDown(event) {
-  // God Mode sequence detection
-  if (event.key.length === 1 && /[a-zA-Z]/.test(event.key)) {
-    godModeSequence += event.key.toLowerCase();
-    if (godModeSequence.length > godModeCode.length) {
-      godModeSequence = godModeSequence.slice(-godModeCode.length);
-    }
-    if (godModeSequence === godModeCode) {
-      godModeSequence = "";
-      if (!godModeActive) {
-        showGodMode();
+    // God Mode sequence detection
+    if (event.key.length === 1 && /[a-zA-Z]/.test(event.key)) {
+      godModeSequence += event.key.toLowerCase();
+  
+      // Trim to match the length of the God Mode code
+      if (godModeSequence.length > godModeCode.length) {
+        godModeSequence = godModeSequence.slice(-godModeCode.length);
+      }
+  
+      // Check if God Mode code matches
+      if (godModeSequence === godModeCode) {
+        console.log("God Mode Activated!");
+        godModeSequence = ""; // Reset sequence after activation
+        if (!godModeActive) {
+          showGodMode();
+        }
       }
     }
+  
+    // Check if the focused element is an input or textarea
+    const activeElement = document.activeElement;
+    const isInputField =
+      activeElement.tagName === "INPUT" ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.isContentEditable;
+  
+    if (isInputField) {
+      // Do not process keydown events if an input field is focused
+      return;
+    }
+  
+    if (!gameActive) return;
+  
+    const key = event.key.toUpperCase();
+  
+    if (key === "BACKSPACE") {
+      event.preventDefault(); // Prevent default backspace behavior
+      removeLetter();
+    } else if (key === "ENTER") {
+      event.preventDefault(); // Prevent default enter behavior
+      submitGuess();
+    } else if (/^[A-Z]$/.test(key)) {
+      event.preventDefault(); // Prevent default behavior for letters
+      addLetter(key);
+    }
   }
-
-  // Check if the focused element is an input or textarea
-  const activeElement = document.activeElement;
-  const isInputField = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable;
-
-  if (isInputField) {
-    // Do not process keydown events if an input field is focused
-    return;
-  }
-
-  if (!gameActive) return;
-
-  const key = event.key.toUpperCase();
-
-  if (key === "BACKSPACE") {
-    event.preventDefault(); // Prevent default backspace behavior
-    removeLetter();
-  } else if (key === "ENTER") {
-    event.preventDefault(); // Prevent default enter behavior
-    submitGuess();
-  } else if (/^[A-Z]$/.test(key)) {
-    event.preventDefault(); // Prevent default behavior for letters
-    addLetter(key);
-  }
-}
 
 function addLetter(letter) {
   if (currentGuess.length < wordLength) {
@@ -700,40 +708,44 @@ function applyStyle(styleName) {
 }
 
 function showGodMode() {
-  godModeActive = true;
-  // Create a modal to display the target word and definition
-  const modal = document.createElement('div');
-  modal.id = 'god-mode-modal';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h2>God Mode Activated</h2>
-      <p>The target word is: <strong>${targetWord}</strong></p>
-      <p id="god-mode-definition">Fetching definition...</p>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  // Fetch and display the definition
-  fetchDefinition(targetWord)
-    .then(definition => {
-      const definitionDiv = modal.querySelector('#god-mode-definition');
-      definitionDiv.textContent = `Definition: ${definition}`;
-    })
-    .catch(error => {
-      const definitionDiv = modal.querySelector('#god-mode-definition');
-      definitionDiv.textContent = `Definition not found.`;
+    console.log("God Mode Function Triggered");
+    godModeActive = true;
+  
+    // Create a modal to display the target word and definition
+    const modal = document.createElement('div');
+    modal.id = 'god-mode-modal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>God Mode Activated</h2>
+        <p>The target word is: <strong>${targetWord}</strong></p>
+        <p id="god-mode-definition">Fetching definition...</p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  
+    // Fetch and display the definition
+    fetchDefinition(targetWord)
+      .then(definition => {
+        const definitionDiv = modal.querySelector('#god-mode-definition');
+        definitionDiv.textContent = `Definition: ${definition}`;
+      })
+      .catch(error => {
+        console.error('Error fetching definition:', error);
+        const definitionDiv = modal.querySelector('#god-mode-definition');
+        definitionDiv.textContent = `Definition not found.`;
+      });
+  
+    // Show the modal
+    modal.style.display = 'block';
+  
+    // Close the modal when the close button is clicked
+    modal.querySelector('.close-button').addEventListener('click', () => {
+      console.log("Modal closed");
+      modal.style.display = 'none';
+      document.body.removeChild(modal);
     });
-
-  // Show the modal
-  modal.style.display = 'block';
-
-  // Close the modal when the close button is clicked
-  modal.querySelector('.close-button').addEventListener('click', () => {
-    modal.style.display = 'none';
-    document.body.removeChild(modal);
-  });
-}
+  }
 
 // Chat Toggle Functionality
 chatToggleButton.addEventListener('click', () => {
@@ -742,6 +754,29 @@ chatToggleButton.addEventListener('click', () => {
     chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Open Hint Bot';
   } else {
     chatToggleButton.innerHTML = '<i class="bi bi-chat-dots"></i> Close Hint Bot';
+  }
+});
+
+// Music Setup with Debugging
+const backgroundMusic = new Audio("music.mp3");
+backgroundMusic.loop = true; // Enable looping
+let isMusicPlaying = false;
+
+// Music Toggle Button
+const musicSwitch = document.getElementById("music-switch");
+musicSwitch.addEventListener("click", async () => {
+  try {
+    if (isMusicPlaying) {
+      backgroundMusic.pause();
+      musicSwitch.innerHTML = '<i class="bi bi-play-circle"></i>';
+    } else {
+      await backgroundMusic.play(); // Use await to handle potential errors
+      musicSwitch.innerHTML = '<i class="bi bi-pause-circle"></i>';
+    }
+    isMusicPlaying = !isMusicPlaying;
+  } catch (error) {
+    console.error("Error toggling music:", error);
+    // Optional: Display an error message to the user
   }
 });
 
