@@ -613,6 +613,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: nowrap;
 }
 
 #music-switch {
@@ -621,9 +622,31 @@ header h1 {
   border-radius: 4px;
   padding: 5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 40px; /* Ensures it doesn’t overflow */
+  height: 40px; /* Fixed size for consistent layout */
 }
 
 #music-switch i {
   font-size: 1.2em;
   color: var(--text-color);
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+  #controls {
+    flex-wrap: wrap; /* Allow controls to wrap on smaller screens */
+    justify-content: center; /* Center-align controls */
+  }
+
+  #music-toggle {
+    margin-top: 5px; /* Add space for better layout on small screens */
+  }
+
+  #music-switch {
+    max-width: 100%; /* Allow it to scale with the container */
+    height: auto; /* Adjust height */
+  }
 }
